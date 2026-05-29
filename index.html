@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>МГУ-ППИ :: РЕЙТИНГ</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+<style>
+:root{
+  --bg:#000000;
+  --surface:#0a0a0a;
+  --surface-hover:#111111;
+  --border:#222222;
+  --border-hover:#00ff41;
+  --text:#e0e0e0;
+  --text-dim:#555555;
+  --neon:#00ff41;
+  --neon-dim:rgba(0,255,65,0.12);
+  --danger:#ff0055;
+  --danger-dim:rgba(255,0,85,0.12);
+  --accent:#00ffff;
+  --silver:#aaaaaa;
+  --bronze:#b87333;
+  --gym:#ff9900;
+  --gym-dim:rgba(255,153,0,0.12);
+  --font-main:'Space Mono',monospace;
+  --font-display:'VT323',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation}
+body{
+  font-family:var(--font-main);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  line-height:1.4;
+  font-size:14px;
+}
+
+/* CRT scanlines */
+.scanlines{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  pointer-events:none;
+  background:repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0) 1px,
+    rgba(0,0,0,0.15) 1px,
+    rgba(0,0,0,0.15) 2px
+  );
+  opacity:0.6;
+}
+
+/* Glitch text */
+.glitch{
+  position:relative;
+  font-family:var(--font-display);
+  letter-spacing:2px;
+}
+.glitch::before,.glitch::after{
+  content:attr(data-text);
+  position:absolute;
+  top:0;left:0;width:100%;height:100%;
+}
+.glitch::before{
+  left:2px;text-shadow:-2px 0 var(--danger);clip:rect(0,900px,0,0);animation:glitch-anim 3s infinite linear alternate-reverse;
+}
+.glitch::after{
+  left:-2px;text-shadow:-2px 0 var(--accent);clip:rect(0,900px,0,0);animation:glitch-anim2 2.5s infinite linear alternate-reverse;
+}
+@keyframes glitch-anim{
+  0%{clip:rect(12px,9999px,56px,0)}
+  20%{clip:rect(89px,9999px,12px,0)}
+  40%{clip:rect(4px,9999px,98px,0)}
+  60%{clip:rect(67px,9999px,3px,0)}
+  80%{clip:rect(23px,9999px,77px,0)}
+  100%{clip:rect(45px,9999px,34px,0)}
+}
+@keyframes glitch-anim2{
+  0%{clip:rect(65px,9999px,2px,0)}
+  20%{clip:rect(3px,9999px,87px,0)}
+  40%{clip:rect(78px,9999px,23px,0)}
+  60%{clip:rect(12px,9999px,67px,0)}
+  80%{clip:rect(54px,9999px,12px,0)}
+  100%{clip:rect(34px,9999px,89px,0)}
+}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:260px;
+  background:var(--bg);
+  border-right:2px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  height:100vh;
+  z-index:50;
+}
+.sidebar-header{padding:2rem 1.5rem;border-bottom:2px solid var(--border)}
+.sidebar-logo{display:flex;align-items:center;gap:.75rem}
+.sidebar-logo .icon{
+  width:40px;height:40px;
+  border:2px solid var(--neon);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;color:var(--neon);
+  font-family:var(--font-display);
+}
+.sidebar-logo h1{
+  font-family:var(--font-display);
+  font-size:1.5rem;
+  font-weight:400;
+  letter-spacing:2px;
+  color:var(--neon);
+}
+.sidebar-logo span{
+  display:block;font-size:.7rem;color:var(--text-dim);
+  letter-spacing:3px;text-transform:uppercase;
+}
+.nav-menu{padding:1rem;display:flex;flex-direction:column;gap:.25rem;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:.875rem;
+  padding:.875rem 1rem;
+  color:var(--text-dim);
+  font-family:var(--font-main);
+  font-size:.85rem;
+  font-weight:700;
+  transition:all .15s ease;
+  border:2px solid transparent;
+  cursor:pointer;text-decoration:none;
+  text-transform:uppercase;letter-spacing:1px;
+}
+.nav-item:hover{
+  background:var(--neon-dim);
+  color:var(--neon);
+  border-color:var(--neon);
+}
+.nav-item.active{
+  background:var(--neon);
+  color:#000;
+  border-color:var(--neon);
+}
+.nav-item i{font-size:1rem;width:20px;text-align:center}
+.sidebar-footer{
+  padding:1rem 1.5rem;
+  border-top:2px solid var(--border);
+  font-size:.7rem;
+  color:var(--text-dim);
+  text-align:center;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+/* Main */
+.main{margin-left:260px;flex:1;padding:2rem;max-width:calc(100% - 260px)}
+
+/* Mobile header */
+.mobile-header{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  height:56px;
+  background:var(--bg);
+  border-bottom:2px solid var(--border);
+  z-index:100;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 1rem;
+}
+.mobile-header .logo{
+  font-family:var(--font-display);
+  font-size:1.4rem;
+  color:var(--neon);
+  letter-spacing:2px;
+  display:flex;align-items:center;gap:.5rem;
+}
+.menu-toggle{
+  background:var(--bg);
+  border:2px solid var(--border);
+  color:var(--text);
+  padding:.4rem .75rem;
+  font-family:var(--font-main);
+  font-size:.8rem;
+  cursor:pointer;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.menu-toggle:hover{border-color:var(--neon);color:var(--neon)}
+
+/* Mobile menu (brutalism) */
+.mobile-menu{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:200;
+  flex-direction:column;
+  padding:1.25rem;
+  animation:fadeIn .15s ease forwards;
+}
+.mobile-menu.active{display:flex}
+.mobile-menu-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:3rem;
+  border-bottom:2px solid var(--border);
+  padding-bottom:1rem;
+}
+.mobile-menu-header .logo{
+  font-family:var(--font-display);
+  font-size:1.6rem;
+  color:var(--neon);
+  letter-spacing:2px;
+}
+.menu-close{
+  background:transparent;
+  border:2px solid var(--border);
+  color:var(--text);
+  font-size:1.2rem;
+  cursor:pointer;
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-main);
+}
+.menu-close:hover{border-color:var(--danger);color:var(--danger)}
+.mobile-menu-items{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  flex:1;
+}
+.menu-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:1.5rem 0;
+  border-bottom:1px solid var(--border);
+  font-family:var(--font-main);
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--text);
+  cursor:pointer;
+  transition:all .1s;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.menu-item:hover{color:var(--neon);padding-left:1rem}
+.menu-item i{color:var(--text-dim);font-size:.8rem}
+.mobile-menu-footer{margin-top:auto;padding-top:1.5rem}
+
+/* Bottom nav */
+.mobile-nav{
+  display:none;
+  padding:.5rem;
+  gap:.25rem;
+  overflow-x:auto;
+  border-top:2px solid var(--border);
+  background:var(--bg);
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:40;
+  justify-content:space-around;
+}
+.mobile-nav .nav-item{
+  flex:1;
+  justify-content:center;
+  padding:.625rem .5rem;
+  font-size:.7rem;
+}
+
+/* Buttons */
+.btn{
+  padding:.625rem 1.25rem;
+  border:2px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-main);
+  font-weight:700;
+  font-size:.85rem;
+  cursor:pointer;
+  transition:all .1s;
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  text-decoration:none;
+  min-height:44px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.btn:hover{
+  border-color:var(--neon);
+  background:var(--neon);
+  color:#000;
+}
+.btn-primary{
+  border-color:var(--neon);
+  color:var(--neon);
+  background:var(--neon-dim);
+}
+.btn-primary:hover{
+  background:var(--neon);
+  color:#000;
+  box-shadow:4px 4px 0px rgba(0,255,65,0.3);
+}
+.btn-danger{
+  border-color:var(--danger);
+  color:var(--danger);
+  background:var(--danger-dim);
+}
+.btn-danger:hover{
+  background:var(--danger);
+  color:#000;
+}
+.btn-sm{padding:.5rem 1rem;font-size:.75rem;min-height:36px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* Hero */
+.hero{
+  text-align:center;
+  padding:3rem 1rem 2.5rem;
+  border-bottom:2px solid var(--border);
+  margin-bottom:2.5rem;
+}
+.hero-title{
+  font-family:var(--font-display);
+  font-size:3.5rem;
+  line-height:1;
+  margin-bottom:1rem;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  color:var(--neon);
+}
+.hero-subtitle{
+  color:var(--text-dim);
+  font-size:.95rem;
+  max-width:500px;
+  margin:0 auto 1.5rem;
+}
+.btn-large{padding:1rem 2rem;font-size:1rem}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+.animate-in{animation:slideUp .35s ease-out forwards;opacity:0}
+.delay-1{animation-delay:.05s}
+.delay-2{animation-delay:.1s}
+.delay-3{animation-delay:.15s}
+.no-anim{animation:none !important;opacity:1 !important;transform:none !important}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Loading */
+.loading-state{
+  text-align:center;
+  padding:4rem 1rem;
+  color:var(--text-dim);
+}
+.loading-state .spinner{
+  width:40px;height:40px;
+  border:2px solid var(--border);
+  border-top-color:var(--neon);
+  margin:0 auto 1rem;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Metrics */
+.metrics-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1.5rem;
+  margin-bottom:2.5rem;
+  max-width:800px;
+  margin-left:auto;margin-right:auto;
+}
+.metric{border:2px solid var(--border);padding:1rem;background:var(--surface)}
+.metric-label{
+  font-size:.7rem;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-bottom:.5rem;
+}
+.metric-value{
+  font-family:var(--font-display);
+  font-size:2rem;
+  font-weight:400;
+  color:var(--neon);
+  letter-spacing:2px;
+}
+
+/* Section titles */
+.section-title{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  font-weight:700;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:3px;
+  margin-bottom:1.25rem;
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+}
+.section-title::after{
+  content:'';
+  flex:1;
+  height:2px;
+  background:var(--border);
+}
+
+/* Podium */
+.podium-section{margin-bottom:2.5rem}
+.podium{
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:1rem;
+  min-height:280px;
+  flex-wrap:wrap;
+}
+.podium-card{
+  flex:1;
+  max-width:280px;
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:1.5rem;
+  text-align:center;
+  position:relative;
+  cursor:pointer;
+  transition:all .1s;
+}
+.podium-card:hover{
+  border-color:var(--neon);
+  background:var(--surface-hover);
+  transform:translate(-2px,-2px);
+  box-shadow:4px 4px 0px var(--neon);
+}
+.podium-card.rank-1{border-color:var(--neon)}
+.podium-card.rank-2{border-color:var(--silver)}
+.podium-card.rank-3{border-color:var(--bronze)}
+.rank-badge{
+  position:absolute;
+  top:-12px;
+  left:50%;
+  transform:translateX(-50%);
+  width:28px;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:1.1rem;
+  border:2px solid var(--bg);
+  background:var(--bg);
+}
+.rank-badge.gold{border-color:var(--neon);color:var(--neon)}
+.rank-badge.silver{border-color:var(--silver);color:var(--silver)}
+.rank-badge.bronze{border-color:var(--bronze);color:var(--bronze)}
+.podium-avatar{
+  width:96px;
+  height:96px;
+  object-fit:cover;
+  border:2px solid var(--border);
+  margin-bottom:.75rem;
+}
+.podium-card.rank-1 .podium-avatar{width:120px;height:120px;border-color:var(--neon)}
+.podium-card.rank-2 .podium-avatar{border-color:var(--silver)}
+.podium-card.rank-3 .podium-avatar{border-color:var(--bronze)}
+.podium-name{font-weight:700;font-size:1rem;margin-bottom:.2rem}
+.podium-group{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  color:var(--text-dim);
+  margin-bottom:.75rem;
+  letter-spacing:1px;
+}
+.podium-score{
+  font-family:var(--font-display);
+  font-size:1.75rem;
+  letter-spacing:2px;
+}
+.podium-card.rank-1 .podium-score{color:var(--neon)}
+.podium-card.rank-2 .podium-score{color:var(--silver)}
+.podium-card.rank-3 .podium-score{color:var(--bronze)}
+
+/* Students list */
+.students-grid{display:flex;flex-direction:column;gap:0}
+.student-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-bottom:none;
+  padding:1rem 1.25rem;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  cursor:pointer;
+  transition:all .1s;
+}
+.student-card:last-child{border-bottom:1px solid var(--border)}
+.student-card:hover{
+  background:var(--neon-dim);
+  border-color:var(--neon);
+  color:#000;
+}
+.student-card:hover .student-name{color:#000}
+.student-card:hover .student-group{color:#000}
+.student-card:hover .student-rank{color:#000}
+.student-card:hover .score-value{color:#000}
+.student-card.voted-flash{animation:studentFlash 2s ease forwards}
+@keyframes studentFlash{
+  0%{border-color:var(--neon);background:var(--neon-dim)}
+  30%{border-color:var(--neon);background:var(--neon-dim);box-shadow:0 0 12px rgba(0,255,65,.2)}
+  100%{border-color:var(--border);background:var(--surface);box-shadow:none}
+}
+.student-rank{
+  font-family:var(--font-display);
+  font-size:1.1rem;
+  font-weight:400;
+  color:var(--text-dim);
+  min-width:40px;
+  text-align:center;
+  letter-spacing:1px;
+}
+.student-avatar{
+  width:44px;
+  height:44px;
+  object-fit:cover;
+  border:1px solid var(--border);
+  flex-shrink:0;
+}
+.student-info{flex:1;min-width:0}
+.student-name{
+  font-weight:700;
+  font-size:.95rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  transition:color .1s;
+}
+.student-group{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  color:var(--text-dim);
+  margin-top:.1rem;
+  letter-spacing:1px;
+  transition:color .1s;
+}
+.student-score{text-align:right}
+.score-value{
+  font-family:var(--font-display);
+  font-size:1.25rem;
+  color:var(--neon);
+  line-height:1;
+  letter-spacing:1px;
+  transition:color .1s;
+}
+.score-label{
+  font-size:.65rem;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-top:.15rem;
+}
+
+/* Float +1 */
+.float-plus{
+  position:fixed;
+  pointer-events:none;
+  color:var(--neon);
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:1.25rem;
+  z-index:1000;
+  animation:floatUp .8s ease-out forwards;
+}
+@keyframes floatUp{
+  0%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(-40px)}
+}
+
+/* Forum */
+.forum-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:1.5rem;
+  flex-wrap:wrap;
+  gap:1rem;
+}
+.page-title{
+  font-family:var(--font-display);
+  font-size:2rem;
+  color:var(--neon);
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+.page-subtitle{color:var(--text-dim);font-size:.9rem;margin-top:.25rem}
+.username-banner{
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:1rem 1.25rem;
+  margin-bottom:1.5rem;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.username-banner.saved{border-color:var(--neon)}
+.username-banner input{
+  background:var(--bg);
+  border:2px solid var(--border);
+  color:var(--neon);
+  padding:.5rem .75rem;
+  font-family:var(--font-main);
+  outline:none;
+  width:200px;
+  min-height:40px;
+  font-size:.9rem;
+}
+.username-banner input:focus{border-color:var(--neon)}
+.topic-list{display:flex;flex-direction:column;gap:.5rem}
+.topic-card{
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:1.25rem;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  cursor:pointer;
+  transition:all .1s;
+  animation:slideUp .35s ease-out forwards;
+  opacity:0;
+}
+.topic-card:hover{
+  border-color:var(--neon);
+  background:var(--surface-hover);
+  transform:translateX(4px);
+}
+.topic-icon{
+  width:40px;height:40px;
+  border:2px solid var(--neon);
+  color:var(--neon);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1rem;
+  flex-shrink:0;
+}
+.topic-info{flex:1;min-width:0}
+.topic-title{
+  font-weight:700;
+  font-size:1rem;
+  margin-bottom:.2rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.topic-meta{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+.topic-stats{text-align:right;flex-shrink:0}
+.topic-count{
+  font-family:var(--font-display);
+  font-size:1.25rem;
+  color:var(--neon);
+  letter-spacing:1px;
+}
+.topic-count-label{
+  font-size:.65rem;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.back-btn{
+  background:transparent;
+  border:2px solid var(--border);
+  color:var(--text-dim);
+  padding:.5rem 1rem;
+  font-family:var(--font-main);
+  font-size:.85rem;
+  cursor:pointer;
+  margin-bottom:1rem;
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  min-height:40px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.back-btn:hover{border-color:var(--neon);color:var(--neon)}
+.message-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--neon);
+  padding:1.25rem;
+  margin-bottom:.5rem;
+  animation:slideUp .35s ease-out forwards;
+  opacity:0;
+}
+.message-card.admin-msg{
+  border-left-color:var(--accent);
+  background:rgba(0,255,255,0.03);
+}
+.msg-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:.5rem;
+  font-size:.85rem;
+  flex-wrap:wrap;
+  gap:.25rem;
+}
+.msg-author{
+  color:var(--neon);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.msg-author.admin{color:var(--accent)}
+.msg-author.admin::before{content:'[ADMIN] ';font-size:.7rem;color:var(--accent)}
+.msg-date{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+.msg-text{
+  line-height:1.6;
+  color:var(--text);
+  word-break:break-word;
+  font-size:.9rem;
+}
+.reply-box{
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:1.25rem;
+  margin-top:1.5rem;
+}
+.reply-box textarea{
+  width:100%;
+  background:var(--bg);
+  border:2px solid var(--border);
+  color:var(--neon);
+  padding:.875rem;
+  font-family:var(--font-main);
+  font-size:.9rem;
+  resize:vertical;
+  min-height:100px;
+  outline:none;
+  margin-bottom:.75rem;
+}
+.reply-box textarea:focus{border-color:var(--neon)}
+.reply-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.75rem;
+}
+.reply-name{
+  color:var(--text-dim);
+  font-size:.85rem;
+}
+.reply-name strong{color:var(--neon)}
+
+/* Admin */
+.admin-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:1.5rem;
+}
+.admin-card{
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:1.5rem;
+}
+.admin-card h3{
+  font-family:var(--font-main);
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:3px;
+  color:var(--neon);
+  margin-bottom:1.25rem;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+.admin-row{
+  display:flex;
+  justify-content:space-between;
+  padding:.75rem 0;
+  border-bottom:1px solid var(--border);
+  font-size:.9rem;
+}
+.admin-row:last-child{border-bottom:none}
+.admin-row span:first-child{color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.admin-row span:last-child{
+  font-family:var(--font-display);
+  font-size:1.1rem;
+  color:var(--text);
+  letter-spacing:1px;
+}
+.login-box{
+  background:var(--surface);
+  border:2px solid var(--border);
+  padding:2.5rem;
+  max-width:420px;
+  margin:4rem auto;
+  text-align:center;
+}
+.login-box h2{
+  font-family:var(--font-display);
+  font-size:2rem;
+  margin-bottom:.5rem;
+  color:var(--neon);
+  letter-spacing:3px;
+}
+.login-box p{color:var(--text-dim);font-size:.9rem;margin-bottom:1.5rem}
+.login-input{
+  width:100%;
+  background:var(--bg);
+  border:2px solid var(--border);
+  color:var(--neon);
+  padding:1rem;
+  font-family:var(--font-main);
+  font-size:1rem;
+  margin-bottom:1rem;
+  outline:none;
+  min-height:48px;
+}
+.login-input:focus{border-color:var(--neon)}
+.student-row-admin{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  padding:.6rem;
+  background:var(--bg);
+  border:1px solid var(--border);
+}
+.student-row-admin img{
+  width:36px;height:36px;
+  object-fit:cover;
+  border:1px solid var(--border);
+}
+.student-row-admin .info{flex:1;font-size:.9rem;min-width:0}
+.student-row-admin .info .name{
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.student-row-admin .info .meta{
+  font-family:var(--font-main);
+  font-size:.75rem;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+
+/* Modals */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:200;
+  padding:1rem;
+}
+.modal-overlay.active{display:flex}
+.modal-box{
+  background:var(--bg);
+  border:2px solid var(--neon);
+  padding:2rem;
+  width:100%;
+  max-width:480px;
+  box-shadow:8px 8px 0px rgba(0,255,65,0.15);
+}
+.modal-box h2{
+  font-family:var(--font-display);
+  font-size:1.75rem;
+  margin-bottom:1.5rem;
+  color:var(--neon);
+  letter-spacing:3px;
+}
+.modal-input{
+  width:100%;
+  background:var(--bg);
+  border:2px solid var(--border);
+  color:var(--neon);
+  padding:.875rem 1rem;
+  font-family:var(--font-main);
+  font-size:.9rem;
+  margin-bottom:1rem;
+  outline:none;
+  min-height:48px;
+}
+.modal-input:focus{border-color:var(--neon)}
+.modal-actions{display:flex;gap:.75rem;margin-top:.5rem}
+.modal-actions .btn{flex:1;justify-content:center}
+.empty{
+  text-align:center;
+  padding:3rem;
+  color:var(--text-dim);
+  border:2px solid var(--border);
+  margin:1rem 0;
+}
+.empty i{font-size:2rem;margin-bottom:1rem;color:var(--text-dim)}
+.photo-upload-row{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin-bottom:.5rem;
+  flex-wrap:wrap;
+}
+.photo-preview-box{
+  width:64px;height:64px;
+  background:var(--bg);
+  border:2px dashed var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.photo-preview-box.has-photo{border-style:solid;border-color:var(--neon)}
+.photo-preview-box img{width:100%;height:100%;object-fit:cover}
+.file-label{cursor:pointer;margin:0}
+.file-hint{
+  font-family:var(--font-main);
+  font-size:.7rem;
+  color:var(--text-dim);
+  margin-top:.25rem;
+  letter-spacing:1px;
+}
+.conn-status{
+  position:fixed;
+  top:1rem;
+  right:1rem;
+  z-index:300;
+  padding:.5rem 1rem;
+  border:2px solid var(--border);
+  font-size:.75rem;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  font-family:var(--font-main);
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.conn-online{border-color:var(--neon);color:var(--neon);background:var(--neon-dim)}
+.conn-offline{border-color:var(--danger);color:var(--danger);background:var(--danger-dim)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .25s ease forwards}
+
+/* Mobile hint */
+#mobile-hint{
+  display:none;
+  background:var(--neon-dim);
+  border:2px solid var(--neon);
+  padding:1rem 1.25rem;
+  margin-bottom:1.5rem;
+  font-size:.9rem;
+  color:var(--text);
+  font-weight:700;
+  align-items:center;
+  gap:.75rem;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+#mobile-hint i{color:var(--neon);font-size:1.1rem}
+
+/* Gym Week */
+.gym-card{border:2px solid var(--border) !important;border-bottom:2px solid var(--border) !important;margin-bottom:-1px;position:relative;z-index:1}
+.gym-card:hover{background:var(--gym-dim);border-color:var(--gym) !important;color:#000;transition:all .15s ease}
+.gym-card:active,.gym-card.voted-flash{background:var(--gym-dim);border-color:var(--gym) !important;transition:all .15s ease}
+.gym-card:hover .student-name{color:#000}
+.gym-card:hover .student-group{color:#000}
+.gym-card:hover .score-value{color:#000}
+.gym-card.voted-flash{animation:gymFlash 2s ease forwards}
+@keyframes gymFlash{
+  0%{border-color:var(--gym);background:var(--gym-dim)}
+  30%{border-color:var(--gym);background:var(--gym-dim);box-shadow:0 0 12px rgba(255,153,0,.25)}
+  100%{border-color:var(--border);background:var(--surface);box-shadow:none}
+}
+.gym-score{color:var(--gym)}
+
+.gym-card .student-avatar{
+  width:80px;
+  height:80px;
+  border-width:2px;
+  border-color:var(--gym);
+  filter:none; 
+}
+
+.gym-hero-img{
+  width:100%;
+  max-height:360px;
+  object-fit:cover;
+  border:2px solid var(--gym);
+  margin-top:2rem;
+  display:block;
+  filter:none;
+}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;max-width:100%;padding:1rem;padding-bottom:6rem;padding-top:4rem}
+  .mobile-header{display:flex}
+  .mobile-nav{display:flex}
+  .hero{padding:2rem 1rem}
+  .hero-title{font-size:2.2rem}
+  .metrics-grid{grid-template-columns:1fr;gap:1rem}
+  .podium{flex-direction:row;align-items:stretch;min-height:auto;gap:.5rem}
+  .podium-card{max-width:100%;width:100%;padding:1rem}
+  .podium-card.rank-1 .podium-avatar{width:56px;height:56px}
+  .podium-avatar{width:48px;height:48px}
+  .podium-name{font-size:.9rem}
+  .podium-score{font-size:1.25rem}
+  .students-grid{gap:0}
+  .student-card{padding:.875rem 1rem}
+  .login-box{margin:2rem 1rem;padding:1.5rem}
+  .admin-grid{grid-template-columns:1fr}
+  .modal-box{padding:1.5rem;max-width:100%;margin:.5rem}
+  .conn-status{top:auto;bottom:4.5rem;right:.5rem}
+  .username-banner{gap:.5rem}
+  .username-banner input{width:100%}
+  .reply-box textarea{min-height:80px}
+  .podium-card.rank-1 .podium-avatar{width:80px;height:80px}
+  .podium-avatar{width:64px;height:64px}
+  .gym-hero-img{
+    max-height:220px;
+    margin-top:1.5rem;
+  }
+  #mobile-hint{display:flex !important}
+}
+@media(max-width:480px){
+  .podium{flex-direction:column;align-items:center}
+  .podium-card{max-width:100%}
+  .metrics-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<div id="conn-status" class="conn-status conn-offline" style="display:none">
+  <i class="fas fa-circle" style="font-size:.5rem"></i>
+  <span id="conn-text">Offline</span>
+</div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-header">
+    <div class="logo"><span style="font-size:1.3rem">🏛️</span> МГУ-ППИ</div>
+    <button class="menu-close" onclick="App.toggleMobileMenu()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="mobile-menu-items">
+    <div class="menu-item" onclick="App.switchTab('gym');App.closeMobileMenu()">Бодибилдеры МГУ-ППИ <i class="fas fa-chevron-right"></i></div>
+    <div class="menu-item" onclick="App.switchTab('rating');App.closeMobileMenu()">Рейтинг <i class="fas fa-chevron-right"></i></div>
+    <div class="menu-item" onclick="App.switchTab('forum');App.closeMobileMenu()">Форум <i class="fas fa-chevron-right"></i></div>
+    <div class="menu-item" onclick="App.switchTab('admin');App.closeMobileMenu()">Админ <i class="fas fa-chevron-right"></i></div>
+  </div>
+  <div class="mobile-menu-footer">
+    <button class="btn btn-primary" style="width:100%" onclick="M.open('add');App.closeMobileMenu()">Добавиться</button>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-add" onclick="if(event.target===this)M.close('add')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h2>> Добавить_себя</h2>
+    <input type="text" class="modal-input" id="input-name" placeholder="Имя и фамилия" onkeypress="if(event.key==='Enter')Rate.addStudent()">
+    <select class="modal-input" id="input-faculty" style="margin-bottom:1rem">
+      <option value="" disabled selected>Выберите факультет</option>
+      <option value="Филфак">Филфак</option>
+      <option value="ВМК">ВМК</option>
+      <option value="ФНМ">ФНМ</option>
+      <option value="Эконом">Эконом</option>
+      <option value="Биофак">Биофак</option>
+      <option value="Химфак">Химфак</option>
+      <option value="Геофак">Геофак</option>
+      <option value="ФУП">ФУП</option>
+      <option value="Физмат">Физмат</option>
+      <option value="ЦИ">ЦИ</option>
+      <option value="ЦКЯ">ЦКЯ</option>
+      <option value="Востоковедение">Востоковедение</option>
+    </select>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;margin-bottom:.5rem;color:var(--text-dim);font-size:.875rem;text-transform:uppercase;letter-spacing:2px">Фото профиля</label>
+      <div class="photo-upload-row">
+        <div class="photo-preview-box" id="photo-preview"><i class="fas fa-camera" style="color:var(--text-dim)"></i></div>
+        <label class="btn file-label"><i class="fas fa-upload"></i> Выбрать файл<input type="file" id="input-photo" accept="image/*" style="display:none" onchange="M.previewPhoto(this, 'photo-preview', 'pendingPhoto')"></label>
+      </div>
+      <div class="file-hint">Максимум 10 МБ. Будет сжато автоматически до ~200 КБ.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="M.close('add')">Отмена</button>
+      <button class="btn btn-primary" id="btn-add-student" onclick="Rate.addStudent()">Добавиться</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-gym-request" onclick="if(event.target===this)M.close('gym-request')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h2 style="color:var(--gym)">> Заявка_на_участие</h2>
+    <input type="text" class="modal-input" id="input-gym-name" placeholder="Имя и фамилия" onkeypress="if(event.key==='Enter')G.submitRequest()">
+    <select class="modal-input" id="input-gym-faculty" style="margin-bottom:1rem">
+      <option value="" disabled selected>Выберите факультет</option>
+      <option value="Филфак">Филфак</option>
+      <option value="ВМК">ВМК</option>
+      <option value="ФНМ">ФНМ</option>
+      <option value="Эконом">Эконом</option>
+      <option value="Биофак">Биофак</option>
+      <option value="Химфак">Химфак</option>
+      <option value="Геофак">Геофак</option>
+      <option value="ФУП">ФУП</option>
+      <option value="Физмат">Физмат</option>
+      <option value="ЦИ">ЦИ</option>
+      <option value="ЦКЯ">ЦКЯ</option>
+      <option value="Востоковедение">Востоковедение</option>
+    </select>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;margin-bottom:.5rem;color:var(--text-dim);font-size:.875rem;text-transform:uppercase;letter-spacing:2px">Фото (обязательно)</label>
+      <div class="photo-upload-row">
+        <div class="photo-preview-box" id="gym-photo-preview"><i class="fas fa-camera" style="color:var(--text-dim)"></i></div>
+        <label class="btn file-label"><i class="fas fa-upload"></i> Выбрать файл<input type="file" id="input-gym-photo" accept="image/*" style="display:none" onchange="M.previewPhoto(this, 'gym-photo-preview', 'pendingGymPhoto')"></label>
+      </div>
+      <div class="file-hint">Максимум 10 МБ. Будет сжато автоматически до ~200 КБ.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="M.close('gym-request')">Отмена</button>
+      <button class="btn btn-primary" id="btn-gym-request" style="border-color:var(--gym);background:var(--gym-dim);color:var(--gym)" onclick="G.submitRequest()">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-topic" onclick="if(event.target===this)M.close('topic')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h2>> Новая_тема</h2>
+    <input type="text" class="modal-input" id="input-topic-title" placeholder="Заголовок темы" onkeypress="if(event.key==='Enter')F.addTopic()">
+    <div class="modal-actions">
+      <button class="btn" onclick="M.close('topic')">Отмена</button>
+      <button class="btn btn-primary" onclick="F.addTopic()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="icon">🏛️</div>
+        <div>
+          <h1>МГУ-ППИ</h1>
+          <span>Рейтинг студентов</span>
+        </div>
+      </div>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-item active" onclick="App.switchTab('gym')" id="nav-gym"><i class="fas fa-dumbbell"></i> Бодибилдеры МГУ-ППИ</div>
+      <div class="nav-item" onclick="App.switchTab('rating')" id="nav-rating"><i class="fas fa-trophy"></i> Рейтинг</div>
+      <div class="nav-item" onclick="App.switchTab('forum')" id="nav-forum"><i class="fas fa-comments"></i> Форум</div>
+      <div class="nav-item" onclick="App.switchTab('admin')" id="nav-admin"><i class="fas fa-shield-alt"></i> Админ</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="margin-bottom:.5rem">МГУ им. М.В. Ломоносова</div>
+      <div style="font-size:.65rem;opacity:.7">Факультет ВМК • 2026</div>
+    </div>
+  </aside>
+
+  <div class="mobile-header">
+    <div class="logo"><span style="font-size:1.2rem">🏛️</span> МГУ-ППИ</div>
+    <button class="menu-toggle" onclick="App.toggleMobileMenu()"><i class="fas fa-bars"></i> Menu</button>
+  </div>
+
+  <div class="mobile-nav">
+    <div class="nav-item active" onclick="App.switchTab('gym')" id="mnav-gym"><i class="fas fa-dumbbell"></i> Бодибилдеры МГУ-ППИ</div>
+    <div class="nav-item" onclick="App.switchTab('rating')" id="mnav-rating"><i class="fas fa-trophy"></i> Рейтинг</div>
+    <div class="nav-item" onclick="App.switchTab('forum')" id="mnav-forum"><i class="fas fa-comments"></i> Форум</div>
+    <div class="nav-item" onclick="App.switchTab('admin')" id="mnav-admin"><i class="fas fa-shield-alt"></i> Админ</div>
+  </div>
+
+  <main class="main">
+    <!-- Gym Tab (default active) -->
+    <section id="tab-gym" class="tab-content active">
+      <div class="hero">
+        <div style="display:inline-flex;align-items:center;gap:.75rem;border:2px solid var(--gym);padding:.5rem 1rem;margin-bottom:1.25rem;background:var(--gym-dim);text-transform:uppercase;letter-spacing:2px;font-size:.8rem;color:var(--gym);font-weight:700">
+          <span style="width:10px;height:10px;background:var(--gym);display:inline-block;border-radius:50%;animation:pulse 2s infinite"></span>
+          Ограниченное мероприятие: 27 мая — 7 июня
+        </div>
+        <h1 class="hero-title glitch" data-text="БОДИБИЛДЕРЫ МГУ-ППИ">Бодибилдеры МГУ-ППИ</h1>
+        <p class="hero-subtitle">27 мая — 7 июня 2026. Голосуй за лучших! Один телефон = один голос.</p>
+        <button class="btn btn-primary btn-large" style="border-color:var(--gym);background:var(--gym-dim);color:var(--gym)" onclick="M.openGymRequest()"><i class="fas fa-dumbbell"></i> Подать заявку</button>
+        <img src="gym-hero.jpeg" alt="Бодибилдеры МГУ-ППИ" class="gym-hero-img">
+      </div>
+
+      <div id="gym-request-banner" style="display:none;margin-bottom:1.5rem" class="username-banner">
+        <div style="flex:1"><div style="font-weight:700;color:var(--gym);text-transform:uppercase;letter-spacing:1px">Ваша заявка на рассмотрении</div><div style="font-size:.8rem;color:var(--text-dim)">Администратор проверит фото и решит, пускать ли вас в рейтинг</div></div>
+      </div>
+
+      <div id="gym-voted-banner" style="display:none;margin-bottom:1.5rem" class="username-banner saved">
+        <div style="flex:1"><div style="font-weight:700;text-transform:uppercase;letter-spacing:1px">Вы уже проголосовали!</div><div style="font-size:.8rem;color:var(--text-dim)">Спасибо за участие. Ждите результатов 7 июня.</div></div>
+      </div>
+
+      <div class="section-title" style="color:var(--gym)">Участники</div>
+      <div id="gym-grid" class="students-grid"></div>
+      <div id="gym-empty" class="empty" style="display:none"><i class="fas fa-dumbbell"></i><div>Пока нет участников. Стань первым!</div></div>
+    </section>
+
+    <!-- Rating Tab -->
+    <section id="tab-rating" class="tab-content">
+      <div class="hero">
+        <h1 class="hero-title glitch" data-text="ТОП СТУДЕНТОВ МГУ-ППИ">ТОП СТУДЕНТОВ МГУ-ППИ</h1>
+        <p class="hero-subtitle">Нажми на студента, чтобы отдать голос. Чем больше кликов — тем выше в ТОПе!</p>
+        <button class="btn btn-primary btn-large" onclick="M.open('add')"><i class="fas fa-plus"></i> Добавиться</button>
+      </div>
+
+      <div id="mobile-hint">
+        <i class="fas fa-hand-pointer"></i>
+        <span>Нажми на любую карточку — добавишь +1 голос</span>
+      </div>
+
+      <div class="podium-section" id="podium-section" style="display:none">
+        <div class="section-title">Подиум</div>
+        <div class="podium" id="podium"></div>
+      </div>
+
+      <div class="section-title">Общий рейтинг</div>
+      <div class="students-grid" id="grid"></div>
+
+      <div class="metrics-grid" style="margin-top:2.5rem;margin-bottom:0">
+        <div class="metric animate-in delay-1">
+          <div class="metric-label">Всего студентов</div>
+          <div class="metric-value" id="stat-total" style="color:var(--text)">0</div>
+        </div>
+        <div class="metric animate-in delay-2">
+          <div class="metric-label">Всего кликов</div>
+          <div class="metric-value" id="stat-clicks" style="color:var(--neon)">0</div>
+        </div>
+        <div class="metric animate-in delay-3">
+          <div class="metric-label">Лидер</div>
+          <div class="metric-value" id="stat-leader" style="color:var(--accent)">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forum Tab -->
+    <section id="tab-forum" class="tab-content">
+      <div class="forum-header">
+        <div>
+          <div class="page-title">Форум</div>
+          <div class="page-subtitle">Обсуждение учёбы, отдыха и не только</div>
+        </div>
+        <button class="btn btn-primary" onclick="M.open('topic')"><i class="fas fa-plus"></i> Новая тема</button>
+      </div>
+      <div id="username-banner-container"></div>
+      <div id="forum-container"></div>
+    </section>
+
+    <!-- Admin Tab -->
+    <section id="tab-admin" class="tab-content">
+      <div id="admin-login-view">
+        <div class="login-box">
+          <h2>> АДМИН_ВХОД</h2>
+          <p>Введите логин и пароль</p>
+          <input type="text" class="login-input" id="admin-username" placeholder="Логин" onkeypress="if(event.key==='Enter')A.login()">
+          <input type="password" class="login-input" id="admin-password" placeholder="Пароль" onkeypress="if(event.key==='Enter')A.login()">
+          <button class="btn btn-primary" onclick="A.login()" style="width:100%;justify-content:center;margin-top:.5rem"><i class="fas fa-lock"></i> Войти</button>
+          <div id="login-error" style="color:var(--danger);font-size:.85rem;margin-top:1rem;display:none"></div>
+        </div>
+      </div>
+
+      <div id="admin-panel-view" style="display:none">
+        <div class="page-header" style="margin-bottom:2rem">
+          <div>
+            <div class="page-title">Админ</div>
+            <div class="page-subtitle">Управление данными рейтинга и форума</div>
+          </div>
+          <button class="btn btn-danger" onclick="A.logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+        </div>
+        <div class="admin-grid">
+          <div class="admin-card animate-in delay-1">
+            <h3><i class="fas fa-chart-pie"></i> Статистика</h3>
+            <div class="admin-row"><span>Студентов</span><span id="adm-students">0</span></div>
+            <div class="admin-row"><span>Всего кликов</span><span id="adm-clicks">0</span></div>
+            <div class="admin-row"><span>Средний счёт</span><span id="adm-avg">0</span></div>
+            <div class="admin-row"><span>Тем на форуме</span><span id="adm-topics">0</span></div>
+            <div class="admin-row"><span>Сообщений</span><span id="adm-messages">0</span></div>
+          </div>
+          <div class="admin-card animate-in delay-2">
+            <h3><i class="fas fa-tools"></i> Управление</h3>
+            <p style="color:var(--text-dim);font-size:.9rem;margin-bottom:1.25rem;line-height:1.6">Сброс удалит все текущие данные. Экспорт сохранит бэкап в JSON.</p>
+            <button class="btn btn-danger" onclick="A.reset()" style="width:100%;margin-bottom:.75rem"><i class="fas fa-trash"></i> Сбросить всё</button>
+            <button class="btn btn-primary" onclick="A.exportData()" style="width:100%"><i class="fas fa-download"></i> Экспорт JSON</button>
+          </div>
+          <div class="admin-card animate-in delay-3" style="grid-column:1/-1">
+            <h3><i class="fas fa-users-cog"></i> Управление студентами</h3>
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Удаление доступно только администратору.</p>
+            <div id="admin-students-list" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem"></div>
+          </div>
+          <div class="admin-card animate-in delay-1" style="grid-column:1/-1">
+            <h3><i class="fas fa-comments"></i> Управление темами форума</h3>
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Удаление темы удалит все сообщения в ней.</p>
+            <div id="admin-forum-topics" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem"></div>
+          </div>
+          <div class="admin-card animate-in delay-1" style="grid-column:1/-1">
+            <h3 style="color:var(--gym)"><i class="fas fa-inbox"></i> Заявки на «Качков недели»</h3>
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Подтвердите или отклоните заявки. При подтверждении участник появится в рейтинге.</p>
+            <div id="admin-gym-requests" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem"></div>
+          </div>
+          <div class="admin-card animate-in delay-2" style="grid-column:1/-1">
+            <h3 style="color:var(--gym)"><i class="fas fa-users"></i> Участники «Качков недели»</h3>
+            <div id="admin-gym-rats" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem"></div>
+          </div>
+          <div class="admin-card animate-in delay-2" style="grid-column:1/-1">
+            <h3><i class="fas fa-comment-slash"></i> Управление сообщениями</h3>
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Выберите тему, чтобы удалить конкретное сообщение.</p>
+            <select id="admin-topic-select" class="modal-input" style="margin-bottom:1rem;background:var(--bg)" onchange="R.adminMessages()">
+              <option value="">Выберите тему...</option>
+            </select>
+            <div id="admin-forum-messages" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// Initialize Parse FIRST, before any code that might depend on it
+try {
+    Parse.initialize("NPHpgyDUY90KTiYRj6TEdSKHsjompzmXEEbM4g6f", "vkln2Y51UWQVxGlK1paohkqlytkUsNpwzduKapWC");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+} catch(e) {
+    console.warn('Parse init failed:', e);
+}
+
+// ==================== CONFIG ====================
+var CFG = {
+    K: {
+        CACHE: 'vmk_cache_back4app_v3',
+        USERNAME: 'vmk_forum_username',
+        CLICK_LOG: 'vmk_click_log',
+        MSG_LOG: 'vmk_msg_log',
+        SESSION_STUDENT: 'vmk_session_student_added',
+        HINT_SEEN: 'hint_seen',
+        GYM_HAS_VOTED: 'gym_has_voted',
+        GYM_VOTE_PENDING: 'gym_vote_pending',
+        GYM_DEVICE_ID: 'gym_device_id'
+    },
+    POLL: 15000,
+    MAX_CLICKS: 10,
+    MAX_MSGS: 10,
+    MAX_FILE: 10485760,
+    RATE_WINDOW: 60000,
+    PODIUM: [
+        {cls: 'rank-1', badge: 'gold', color: 'var(--neon)'},
+        {cls: 'rank-2', badge: 'silver', color: 'var(--silver)'},
+        {cls: 'rank-3', badge: 'bronze', color: 'var(--bronze)'}
+    ]
+};
+
+// ==================== UTILS ====================
+var U = {
+    esc: function(t) {
+        if (!t) return '';
+        var d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
+    },
+    avatar: function(s) {
+        if (s && s.photo) return s.photo;
+        var n = (s && s.name) ? s.name : s;
+        return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n || '?') + '&background=000000&color=00ff41&size=128&font-size=0.4';
+    },
+    tid: function(p) { return (p || 't') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); },
+    confetti: function(x, y, cols) {
+        if (typeof confetti === 'undefined') return;
+        confetti({particleCount: 100, spread: 70, origin: {x: x / window.innerWidth, y: y / window.innerHeight}, colors: cols || ['#00ff41', '#00ffff', '#ff0055', '#ffffff']});
+    },
+    float: function(t, x, y, c) {
+        var el = document.createElement('div');
+        el.className = 'float-plus';
+        el.textContent = t;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        if (c) el.style.color = c;
+        document.body.appendChild(el);
+        setTimeout(function() { el.remove(); }, 800);
+    },
+    hash: function(o) { try { return JSON.stringify(o); } catch(e) { return '' + Date.now(); } }
+};
+
+// ==================== STATE ====================
+var S = {
+    students: [],
+    forum: {topics: []},
+    gym: {rats: [], myRequest: null},
+    tab: 'gym',
+    topicId: null,
+    parseOk: false,
+    sending: false,
+    uploading: false,
+    photoCache: {},
+    _sh: '',
+    _fh: '',
+    _gh: '',
+
+    load: function() {
+        try {
+            var c = localStorage.getItem(CFG.K.CACHE);
+            if (c) { var p = JSON.parse(c); this.students = p.students || []; this.forum = p.forum || {topics: []}; this.gym = p.gym || {rats: [], myRequest: null}; }
+        } catch(e) { console.error('load cache error', e); }
+    },
+    save: function() {
+        try { localStorage.setItem(CFG.K.CACHE, JSON.stringify({students: this.students, forum: this.forum, gym: this.gym})); }
+        catch(e) { console.warn('save cache failed', e); }
+    },
+    user: function() { return localStorage.getItem(CFG.K.USERNAME) || ''; },
+    setUser: function(n) { localStorage.setItem(CFG.K.USERNAME, n.trim()); },
+    added: function() { return !!sessionStorage.getItem(CFG.K.SESSION_STUDENT); },
+    markAdded: function() { sessionStorage.setItem(CFG.K.SESSION_STUDENT, 'true'); },
+    defaults: function() {
+        this.students = [
+            {id: 's1', name: 'Иван Петров', group: 'ВМК', clicks: 42, photo: null, pendingClicks: 0},
+            {id: 's2', name: 'Мария Сидорова', group: 'Физмат', clicks: 38, photo: null, pendingClicks: 0},
+            {id: 's3', name: 'Алексей Иванов', group: 'ВМК', clicks: 35, photo: null, pendingClicks: 0},
+            {id: 's4', name: 'Анна Козлова', group: 'Эконом', clicks: 28, photo: null, pendingClicks: 0},
+            {id: 's5', name: 'Дмитрий Смирнов', group: 'ФНМ', clicks: 24, photo: null, pendingClicks: 0},
+            {id: 's6', name: 'Елена Волкова', group: 'Биофак', clicks: 19, photo: null, pendingClicks: 0},
+            {id: 's7', name: 'Никита Фёдоров', group: 'Востоковедение', clicks: 15, photo: null, pendingClicks: 0},
+            {id: 's8', name: 'Ольга Морозова', group: 'Химфак', clicks: 12, photo: null, pendingClicks: 0}
+        ];
+        this.forum = {topics: [
+            {id: 't1', title: 'Кто готов к контрольной по матану?', author: 'Иван Петров', date: '2026-05-10', messages: [
+                {id: 1, author: 'Мария Сидорова', text: 'Я уже третий день не сплю, решаю билеты. Кто-то знает, будет ли теорема Ролля?', date: '2026-05-10', isAdmin: false},
+                {id: 2, author: 'Алексей Иванов', text: 'Будет. И ещё интегралы по поверхностям точно. Удачи всем.', date: '2026-05-11', isAdmin: false}
+            ]},
+            {id: 't2', title: 'Линейная алгебра — кто разобрался с жордановой формой?', author: 'Анна Козлова', date: '2026-05-12', messages: [
+                {id: 1, author: 'Дмитрий Смирнов', text: 'Жорданова форма — это просто. Смотри алгоритм: характеристический многочлен → собственные значения → размерности ядер.', date: '2026-05-12', isAdmin: false}
+            ]},
+            {id: 't3', title: 'Новый рейтинг круче старого!', author: 'Никита Фёдоров', date: '2026-05-14', messages: [
+                {id: 1, author: 'Ольга Морозова', text: 'Согласна, терминальный стиль огонь. Давайте все кликнем на Ивана, пусть у него будет 100!', date: '2026-05-14', isAdmin: false},
+                {id: 2, author: 'ADMIN', text: 'Спасибо за фидбек. Не забывайте — честная конкуренция превыше всего. Удачи на сессии.', date: '2026-05-15', isAdmin: true}
+            ]}
+        ]};
+        this.gym = {rats: [], myRequest: null};
+        this.topicId = null;
+        this.save();
+    },
+    sh: function() { return U.hash(this.students.map(function(s) { return {id: s.id, n: s.name, g: s.group, c: s.clicks}; })); },
+    fh: function() { return U.hash(this.forum.topics.map(function(t) { return {id: t.id, n: t.title, m: (t.messages || []).length}; })); },
+    gh: function() { return U.hash((this.gym.rats || []).map(function(r) { return {id: r.id, n: r.name, c: r.clicks}; })); },
+    changed: function() { return {s: this.sh() !== this._sh, f: this.fh() !== this._fh, g: this.gh() !== this._gh}; },
+    snap: function() { this._sh = this.sh(); this._fh = this.fh(); this._gh = this.gh(); }
+};
+
+// ==================== RATE LIMITER ====================
+var RL = {
+    getLog: function(k) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : []; } catch(e) { return []; } },
+    saveLog: function(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
+    wait: function(k, max, win) {
+        var now = Date.now();
+        var log = this.getLog(k).filter(function(t) { return now - t < win; });
+        if (log.length < max) return 0;
+        var w = win - (now - log[0]);
+        return w > 0 ? w : 0;
+    },
+    log: function(k) {
+        var now = Date.now();
+        var log = this.getLog(k).filter(function(t) { return now - t < CFG.RATE_WINDOW; });
+        log.push(now);
+        this.saveLog(k, log);
+    },
+    clickWait: function() { return this.wait(CFG.K.CLICK_LOG, CFG.MAX_CLICKS, CFG.RATE_WINDOW); },
+    msgWait: function() { return this.wait(CFG.K.MSG_LOG, CFG.MAX_MSGS, CFG.RATE_WINDOW); },
+    logClick: function() { this.log(CFG.K.CLICK_LOG); },
+    logMsg: function() { this.log(CFG.K.MSG_LOG); }
+};
+
+// ==================== PHOTO COMPRESSOR ====================
+var Photo = {
+    compress: function(file) {
+        return new Promise(function(resolve, reject) {
+            if (file.size > CFG.MAX_FILE) { reject(new Error('Файл слишком большой. Максимум 10 МБ.')); return; }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var size = 300, quality = 0.6;
+                    function go() {
+                        var c = document.createElement('canvas');
+                        var w = img.width, h = img.height;
+                        if (w > h && w > size) { h = Math.round(h * size / w); w = size; }
+                        else if (h > size) { w = Math.round(w * size / h); h = size; }
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        var url = c.toDataURL('image/jpeg', quality);
+                        var approx = Math.round(url.length * 0.75);
+                        if (approx > 512000 && quality > 0.3) { quality = 0.3; return go(); }
+                        if (approx > 204800 && size > 200) { size = 200; quality = 0.2; return go(); }
+                        resolve(url);
+                    }
+                    go();
+                };
+                img.onerror = function() { reject(new Error('Не удалось загрузить изображение')); };
+                img.src = e.target.result;
+            };
+            reader.onerror = function() { reject(new Error('Не удалось прочитать файл')); };
+            reader.readAsDataURL(file);
+        });
+    }
+};
+
+// ==================== SYNC SERVICE ====================
+var Sync = {
+    timer: null,
+    init: async function() {
+        try {
+            var q = new Parse.Query('Student');
+            await q.first().catch(function(){});
+            S.parseOk = true;
+            this.showConn(true);
+            this.start();
+            return true;
+        } catch(e) {
+            console.error('Parse init error:', e);
+            S.parseOk = false;
+            this.showConn(false);
+            return false;
+        }
+    },
+    showConn: function(ok) {
+        var el = document.getElementById('conn-status');
+        var txt = document.getElementById('conn-text');
+        if (!el) return;
+        el.style.display = 'flex';
+        if (ok) {
+            el.className = 'conn-status conn-online';
+            txt.textContent = 'Online';
+            setTimeout(function() { el.style.display = 'none'; }, 3000);
+        } else {
+            el.className = 'conn-status conn-offline';
+            txt.textContent = 'Offline';
+        }
+    },
+    start: function() { this.loadAll(); this.timer = setInterval(function() { Sync.loadAll(); }, CFG.POLL); },
+    loadAll: async function() {
+        if (!S.parseOk) return;
+        try {
+            var before = S._sh + '|' + S._fh + '|' + S._gh;
+            await this.loadStudents();
+            await this.loadForum();
+            await this.loadGym();
+            await this.upload();
+            S.snap();
+            var after = S._sh + '|' + S._fh + '|' + S._gh;
+            if (after !== before) { this.showConn(true); S.save(); if (window.App && window.App.onData) window.App.onData(); }
+        } catch(e) { console.error('poll error', e); this.showConn(false); }
+    },
+    loadStudents: async function() {
+        try {
+            var q = new Parse.Query('Student'); q.limit(1000);
+            var res = await q.find();
+            var list = res.map(function(s) { return {id: s.id, name: s.get('name'), group: s.get('group'), clicks: s.get('clicks') || 0, photo: s.get('photo') || null}; });
+            var ids = new Set(list.map(function(s) { return s.id; }));
+            var map = new Map(list.map(function(s) { return [s.id, s]; }));
+            S.students = S.students.filter(function(l) { if (!l.id || l.id.indexOf('temp_') === 0) return true; return ids.has(l.id); });
+            S.students.forEach(function(l) {
+                if (!l.id || l.id.indexOf('temp_') === 0) return;
+                var sv = map.get(l.id);
+                if (sv) { l.name = sv.name; l.group = sv.group; l.photo = sv.photo; l.clicks = sv.clicks + (l.pendingClicks || 0); }
+            });
+            list.forEach(function(s) { if (!S.students.find(function(st) { return st.id === s.id; })) S.students.push(s); });
+        } catch(e) { if (!this._cnf(e)) throw e; }
+    },
+    loadForum: async function() {
+        try {
+            var q = new Parse.Query('ForumTopic'); q.limit(1000);
+            var res = await q.find();
+            var list = res.map(function(t) { return {id: t.id, title: t.get('title'), author: t.get('author'), date: t.get('date'), messages: t.get('messages') || []}; });
+            var ids = new Set(list.map(function(t) { return t.id; }));
+            var map = new Map(list.map(function(t) { return [t.id, t]; }));
+            S.forum.topics = S.forum.topics.filter(function(l) { if (!l.id || l.id.indexOf('temp_') === 0) return true; return ids.has(l.id); });
+            if (S.topicId && !ids.has(S.topicId)) S.topicId = null;
+            S.forum.topics.forEach(function(l) {
+                if (!l.id || l.id.indexOf('temp_') === 0) return;
+                var sv = map.get(l.id);
+                if (sv) { l.title = sv.title; l.author = sv.author; l.date = sv.date; var pending = (l.messages || []).filter(function(m) { return m.pending; }); l.messages = (sv.messages || []).concat(pending); }
+            });
+            list.forEach(function(t) { if (!S.forum.topics.find(function(tp) { return tp.id === t.id; })) S.forum.topics.push(t); });
+        } catch(e) { if (!this._cnf(e)) throw e; }
+    },
+    loadGym: async function() {
+        if (!S.parseOk) return;
+        try {
+            var q = new Parse.Query('GymRat'); q.limit(1000);
+            var res = await q.find();
+            var list = res.map(function(s) { return {id: s.id, name: s.get('name'), group: s.get('group'), clicks: s.get('clicks') || 0, photo: s.get('photo') || null}; });
+            var map = new Map(list.map(function(r) { return [r.id, r]; }));
+            S.gym.rats = S.gym.rats.map(function(l) {
+                var sv = map.get(l.id);
+                if (sv) return l.pendingGymVote ? {id: sv.id, name: sv.name, group: sv.group, clicks: Math.max(sv.clicks, l.clicks), photo: sv.photo, pendingGymVote: true} : sv;
+                return l;
+            });
+            list.forEach(function(r) { if (!S.gym.rats.find(function(x) { return x.id === r.id; })) S.gym.rats.push(r); });
+            var rq = new Parse.Query('GymRequest');
+            rq.equalTo('deviceId', G.getDeviceId());
+            var myReq = await rq.first();
+            S.gym.myRequest = myReq ? {id: myReq.id, status: myReq.get('status')} : null;
+        } catch(e) { if (!this._cnf(e)) console.error('gym load error', e); }
+    },
+    upload: async function() {
+        if (!S.parseOk || S.uploading) return;
+        S.uploading = true;
+        try { await this.upStudents(); await this.upTopics(); await this.upGymVotes(); }
+        finally { S.uploading = false; }
+    },
+    upStudents: async function() {
+        var arr = S.students.slice();
+        for (var i = 0; i < arr.length; i++) {
+            var st = arr[i];
+            if (st.id && st.id.indexOf('temp_') === 0 && !st._up) {
+                st._up = true;
+                try { var Sobj = Parse.Object.extend('Student'); var s = new Sobj(); s.set('name', st.name); s.set('group', st.group); s.set('clicks', st.clicks); if (st.photo) s.set('photo', st.photo); var saved = await s.save(); st.id = saved.id; st.pendingClicks = 0; }
+                catch(e) { console.error('upload temp student error', e); }
+                finally { delete st._up; }
+                continue;
+            }
+            var pending = st.pendingClicks || 0;
+            if (pending <= 0 || !st.id || st.id.indexOf('temp_') === 0) continue;
+            try { var q = new Parse.Query('Student'); var obj = await q.get(st.id); obj.increment('clicks', pending); var saved = await obj.save(); st.pendingClicks = 0; st.clicks = saved.get('clicks') || 0; }
+            catch(e) { if (e.code === 101) st.pendingClicks = 0; else console.error('upload clicks error', e); }
+        }
+    },
+    upTopics: async function() {
+        var arr = S.forum.topics.slice();
+        for (var i = 0; i < arr.length; i++) {
+            var t = arr[i];
+            if (t.id && t.id.indexOf('temp_') === 0 && !t._up) {
+                t._up = true;
+                try { var T = Parse.Object.extend('ForumTopic'); var tp = new T(); tp.set('title', t.title); tp.set('author', t.author); tp.set('date', t.date); tp.set('messages', t.messages || []); var saved = await tp.save(); t.id = saved.id; }
+                catch(e) { console.error('upload temp topic error', e); }
+                finally { delete t._up; }
+            }
+        }
+    },
+    upGymVotes: async function() {
+        var raw = localStorage.getItem(CFG.K.GYM_VOTE_PENDING);
+        if (!raw) return;
+        try {
+            var v = JSON.parse(raw);
+            var vote = new Parse.Object('GymVote');
+            vote.set('ratId', v.ratId); vote.set('deviceId', v.deviceId);
+            await vote.save();
+            var q = new Parse.Query('GymRat');
+            var obj = await q.get(v.ratId);
+            obj.increment('clicks'); await obj.save();
+            localStorage.removeItem(CFG.K.GYM_VOTE_PENDING);
+            localStorage.setItem(CFG.K.GYM_HAS_VOTED, 'true');
+            var rat = S.gym.rats.find(function(r) { return r.id === v.ratId; });
+            if (rat) rat.pendingGymVote = false;
+        } catch(e) { console.error('upload gym vote error', e); }
+    },
+    del: async function(cls, id) {
+        if (!S.parseOk) return;
+        try { var q = new Parse.Query(cls); var obj = await q.get(id); await obj.destroy(); return true; }
+        catch(e) { if (e.code === 119) throw new Error('Нет прав на удаление. Войдите как администратор.'); throw e; }
+    },
+    _cnf: function(e) { return e.message && (e.message.indexOf('Class not found') !== -1 || e.message.indexOf('does not exist') !== -1); }
+};
+
+// ==================== RENDERER ====================
+var R = {
+    rating: function(a) {
+        a = a !== false;
+        var sorted = S.students.slice().sort(function(x, y) { return y.clicks - x.clicks; });
+        var total = S.students.reduce(function(s, st) { return s + st.clicks; }, 0);
+        var elTotal = document.getElementById('stat-total');
+        var elClicks = document.getElementById('stat-clicks');
+        var elLeader = document.getElementById('stat-leader');
+        if (elTotal) elTotal.textContent = S.students.length;
+        if (elClicks) elClicks.textContent = total;
+        if (elLeader) elLeader.textContent = sorted.length > 0 ? sorted[0].name.split(' ')[0] : '—';
+
+        var podiumEl = document.getElementById('podium');
+        var podiumSec = document.getElementById('podium-section');
+        if (sorted.length >= 1) {
+            if (podiumSec) podiumSec.style.display = 'block';
+            if (podiumEl) {
+                podiumEl.innerHTML = sorted.slice(0, 3).map(function(s, i) {
+                    var c = CFG.PODIUM[i];
+                    return '<div class="podium-card ' + c.cls + ' ' + (a ? 'animate-in delay-' + (i + 1) : 'no-anim') + '" onclick="Rate.handleClick(&#39;' + s.id + '&#39;,event)">' +
+                        '<div class="rank-badge ' + c.badge + '">' + (i + 1) + '</div>' +
+                        '<img src="' + U.avatar(s) + '" class="podium-avatar" alt="" style="border-color:' + c.color + '">' +
+                        '<div class="podium-name">' + U.esc(s.name) + '</div>' +
+                        '<div class="podium-group">' + U.esc(s.group) + '</div>' +
+                        '<div class="podium-score" style="color:' + c.color + '">' + s.clicks + '</div></div>';
+                }).join('');
+            }
+        } else { if (podiumSec) podiumSec.style.display = 'none'; }
+
+        var grid = document.getElementById('grid');
+        if (!grid) return;
+        if (sorted.length === 0) { grid.innerHTML = '<div class="empty" style="padding:4rem 1rem"><i class="fas fa-user-graduate"></i><div>Пока нет студентов. Добавься первым!</div></div>'; return; }
+        grid.innerHTML = sorted.map(function(s, i) {
+            return '<div class="student-card ' + (a ? 'animate-in delay-' + ((i % 4) + 1) : 'no-anim') + '" onclick="Rate.handleClick(&#39;' + s.id + '&#39;,event)">' +
+                '<div class="student-rank">#' + (i + 1) + '</div>' +
+                '<img src="' + U.avatar(s) + '" class="student-avatar" alt="">' +
+                '<div class="student-info"><div class="student-name">' + U.esc(s.name) + '</div><div class="student-group">' + U.esc(s.group) + '</div></div>' +
+                '<div class="student-score"><div class="score-value">' + s.clicks + '</div><div class="score-label">кликов</div></div></div>';
+        }).join('');
+    },
+
+    gym: function(a) {
+        a = a !== false;
+        var grid = document.getElementById('gym-grid');
+        var empty = document.getElementById('gym-empty');
+        var reqBanner = document.getElementById('gym-request-banner');
+        var votedBanner = document.getElementById('gym-voted-banner');
+        if (reqBanner) reqBanner.style.display = (S.gym.myRequest && S.gym.myRequest.status === 'pending') ? 'flex' : 'none';
+        var voted = localStorage.getItem(CFG.K.GYM_HAS_VOTED) === 'true' || S.gym.rats.some(function(r) { return r.pendingGymVote; }) || !!localStorage.getItem(CFG.K.GYM_VOTE_PENDING);
+        if (votedBanner) votedBanner.style.display = voted ? 'flex' : 'none';
+        var rats = S.gym.rats.slice().sort(function(x, y) { return y.clicks - x.clicks; });
+        if (rats.length === 0) { if (grid) grid.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        if (grid) {
+            grid.innerHTML = rats.map(function(s, i) {
+                return '<div class="student-card gym-card ' + (a ? 'animate-in delay-' + ((i % 4) + 1) : 'no-anim') + '" onclick="G.handleVote(&#39;' + s.id + '&#39;,event)">' +
+                    '<div class="student-rank">#' + (i + 1) + '</div>' +
+                    '<img src="' + U.avatar(s) + '" class="student-avatar" alt="" style="border-color:var(--gym)">' +
+                    '<div class="student-info"><div class="student-name">' + U.esc(s.name) + '</div><div class="student-group">' + U.esc(s.group) + '</div></div>' +
+                    '<div class="student-score"><div class="score-value gym-score">' + s.clicks + '</div><div class="score-label">голосов</div></div></div>';
+            }).join('');
+        }
+    },
+
+    forum: function(a) {
+        a = a !== false;
+        var container = document.getElementById('forum-container');
+        var banner = document.getElementById('username-banner-container');
+        if (!container || !banner) return;
+        this._forumBanner(banner);
+        if (S.topicId) {
+            var exists = S.forum.topics.find(function(t) { return t.id === S.topicId; });
+            if (!exists) { S.topicId = null; this._forumList(container, a); return; }
+            this._forumTopic(container, a);
+        } else { this._forumList(container, a); }
+    },
+
+    _forumBanner: function(el) {
+        var username = S.user();
+        if (!username) {
+            el.innerHTML = '<div class="username-banner"><div style="flex:1;min-width:0"><div style="font-weight:700;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:2px">Представьтесь на форуме</div><div style="font-size:.8rem;color:var(--text-dim)">Введите имя, чтобы писать от своего имени</div></div><input type="text" id="set-username-input" placeholder="Ваше имя" onkeypress="if(event.key===&#39;Enter&#39;)F.saveUser(document.getElementById(&#39;set-username-input&#39;).value)"><button class="btn btn-primary btn-sm" onclick="F.saveUser(document.getElementById(&#39;set-username-input&#39;).value)">Сохранить</button></div>';
+        } else {
+            el.innerHTML = '<div class="username-banner saved"><div style="flex:1"><div style="font-weight:700">Вы пишете как <strong style="color:var(--neon)">' + U.esc(username) + '</strong></div><div style="font-size:.8rem;color:var(--text-dim)">Имя сохранено в этом браузере</div></div><button class="btn btn-sm" onclick="F.clearUser()" style="border-color:var(--danger);color:var(--danger)"><i class="fas fa-times"></i> Сменить</button></div>';
+        }
+    },
+
+    _forumList: function(el, a) {
+        var topics = S.forum.topics.slice().sort(function(x, y) { return new Date(y.date) - new Date(x.date); });
+        if (topics.length === 0) { el.innerHTML = '<div class="empty"><i class="fas fa-comments"></i><div>Нет тем. Создайте первую!</div></div>'; return; }
+        el.innerHTML = '<div class="topic-list">' + topics.map(function(t, i) {
+            var mc = (t.messages || []).length;
+            return '<div class="topic-card ' + (a ? '' : 'no-anim') + '" style="' + (a ? 'animation-delay:' + (i * 0.05) + 's' : '') + '" onclick="F.openTopic(&#39;' + t.id + '&#39;)">' +
+                '<div class="topic-icon"><i class="fas fa-comment-dots"></i></div>' +
+                '<div class="topic-info"><div class="topic-title">' + U.esc(t.title) + '</div><div class="topic-meta">' + U.esc(t.author) + ' &bull; ' + t.date + ' &bull; ' + mc + ' ответов</div></div>' +
+                '<div class="topic-stats"><div class="topic-count">' + mc + '</div><div class="topic-count-label">ответов</div></div></div>';
+        }).join('') + '</div>';
+    },
+
+    _forumTopic: function(el, a) {
+        var topic = S.forum.topics.find(function(t) { return t.id === S.topicId; });
+        if (!topic) { S.topicId = null; this._forumList(el, a); return; }
+        var savedText = '', savedStart = 0, savedEnd = 0, hadFocus = false;
+        var oldTa = document.getElementById('msg-text');
+        if (oldTa) { savedText = oldTa.value; savedStart = oldTa.selectionStart; savedEnd = oldTa.selectionEnd; hadFocus = (document.activeElement === oldTa); }
+        var html = '<button class="back-btn" onclick="F.closeTopic()"><i class="fas fa-arrow-left"></i> К списку тем</button>' +
+            '<div style="background:var(--surface);border:2px solid var(--border);padding:1.5rem;margin-bottom:1.5rem">' +
+            '<h3 style="font-size:1.15rem;font-weight:700;margin-bottom:.5rem;color:var(--neon);text-transform:uppercase;letter-spacing:2px">' + U.esc(topic.title) + '</h3>' +
+            '<div style="font-size:.85rem;color:var(--text-dim);font-family:var(--font-main);letter-spacing:1px">' + U.esc(topic.author) + ' &bull; ' + topic.date + '</div></div>';
+        (topic.messages || []).forEach(function(msg, idx) {
+            html += '<div class="message-card ' + (msg.isAdmin ? 'admin-msg ' : ' ') + (a ? '' : 'no-anim') + '" style="' + (a ? 'animation-delay:' + (idx * 0.05) + 's' : '') + '">' +
+                '<div class="msg-header"><span class="msg-author ' + (msg.isAdmin ? 'admin' : '') + '">' + (msg.isAdmin ? 'Администратор' : U.esc(msg.author)) + '</span><span class="msg-date">' + msg.date + '</span></div>' +
+                '<div class="msg-text">' + U.esc(msg.text) + '</div></div>';
+        });
+        var username = S.user();
+        var isSending = S.sending;
+        html += '<div class="reply-box"><div style="font-weight:700;margin-bottom:.75rem;color:var(--neon);text-transform:uppercase;letter-spacing:2px">Ответить в тему</div>' +
+            '<textarea id="msg-text" placeholder="Введите текст сообщения..."></textarea>' +
+            '<div class="reply-meta"><div class="reply-name">' + (username ? 'От имени: <strong>' + U.esc(username) + '</strong>' : 'Введите имя в баннере выше, чтобы отвечать') + '</div>' +
+            '<button class="btn btn-primary" onclick="F.addMessage()" ' + (!username || isSending ? 'disabled style="opacity:.5;cursor:not-allowed"' : '') + '>' + (isSending ? '<i class="fas fa-spinner fa-spin"></i> Отправка...' : 'Отправить <i class="fas fa-paper-plane"></i>') + '</button></div></div>';
+        el.innerHTML = html;
+        var newTa = document.getElementById('msg-text');
+        if (newTa && savedText) { newTa.value = savedText; newTa.selectionStart = savedStart; newTa.selectionEnd = savedEnd; if (hadFocus) newTa.focus(); }
+    },
+
+    admin: function(a) {
+        a = a !== false;
+        var data = S;
+        var totalClicks = S.students.reduce(function(s, st) { return s + st.clicks; }, 0);
+        var avg = S.students.length ? (totalClicks / S.students.length).toFixed(1) : 0;
+        var messages = S.forum.topics.reduce(function(s, t) { return s + (t.messages || []).length; }, 0);
+        var el = function(id) { return document.getElementById(id); };
+        if (el('adm-students')) el('adm-students').textContent = S.students.length;
+        if (el('adm-clicks')) el('adm-clicks').textContent = totalClicks;
+        if (el('adm-avg')) el('adm-avg').textContent = avg;
+        if (el('adm-topics')) el('adm-topics').textContent = S.forum.topics.length;
+        if (el('adm-messages')) el('adm-messages').textContent = messages;
+
+        var list = el('admin-students-list');
+        if (list) {
+            if (S.students.length === 0) list.innerHTML = '<div class="empty">Нет студентов</div>';
+            else list.innerHTML = S.students.map(function(s) {
+                return '<div class="student-row-admin"><img src="' + U.avatar(s) + '" alt="" style="width:36px;height:36px;object-fit:cover;border:1px solid var(--border)"><div class="info"><div class="name">' + U.esc(s.name) + '</div><div class="meta">' + U.esc(s.group) + ' &bull; ' + s.clicks + ' кликов</div></div><button class="btn btn-danger btn-sm" onclick="A.delStudent(&#39;' + s.id + '&#39;)"><i class="fas fa-trash"></i></button></div>';
+            }).join('');
+        }
+
+        var tList = el('admin-forum-topics');
+        if (tList) {
+            if (S.forum.topics.length === 0) tList.innerHTML = '<div class="empty">Нет тем</div>';
+            else tList.innerHTML = S.forum.topics.map(function(t) {
+                return '<div class="student-row-admin" style="justify-content:space-between"><div class="info" style="flex:1"><div class="name">' + U.esc(t.title) + '</div><div class="meta">' + U.esc(t.author) + ' &bull; ' + (t.messages || []).length + ' сообщений</div></div><button class="btn btn-danger btn-sm" onclick="A.delTopic(&#39;' + t.id + '&#39;)"><i class="fas fa-trash"></i></button></div>';
+            }).join('');
+        }
+
+        var sel = el('admin-topic-select');
+        if (sel) {
+            var cv = sel.value;
+            sel.innerHTML = '<option value="">Выберите тему...</option>' + S.forum.topics.map(function(t) { return '<option value="' + t.id + '">' + U.esc(t.title) + '</option>'; }).join('');
+            if (cv && S.forum.topics.find(function(t) { return t.id === cv; })) sel.value = cv;
+        }
+        this.adminMessages();
+        G.renderAdmin();
+    },
+
+    adminMessages: function() {
+        var container = document.getElementById('admin-forum-messages');
+        var sel = document.getElementById('admin-topic-select');
+        var tid = sel ? sel.value : '';
+        if (!container) return;
+        if (!tid) { container.innerHTML = '<div style="color:var(--text-dim);font-size:.9rem">Выберите тему выше</div>'; return; }
+        var topic = S.forum.topics.find(function(t) { return t.id === tid; });
+        if (!topic || !(topic.messages || []).length) { container.innerHTML = '<div class="empty">Нет сообщений</div>'; return; }
+        container.innerHTML = topic.messages.map(function(msg, idx) {
+            return '<div class="student-row-admin" style="justify-content:space-between;align-items:flex-start"><div class="info" style="flex:1"><div class="name">' + U.esc(msg.author) + ' <span style="color:var(--text-dim);font-weight:400">&bull; ' + msg.date + '</span></div><div class="meta" style="white-space:normal;word-break:break-word">' + U.esc(msg.text) + '</div></div><button class="btn btn-danger btn-sm" onclick="A.delMessage(&#39;' + topic.id + '&#39;,' + idx + ')" style="margin-left:.5rem;flex-shrink:0"><i class="fas fa-trash"></i></button></div>';
+        }).join('');
+    }
+};
+
+// ==================== FORUM MODULE ====================
+var F = {
+    openTopic: function(id) { S.topicId = id; R.forum(true); window.scrollTo({top: 0, behavior: 'smooth'}); },
+    closeTopic: function() { S.topicId = null; R.forum(true); },
+    saveUser: function(name) { if (!name || !name.trim()) return; S.setUser(name); R.forum(true); },
+    clearUser: function() { localStorage.removeItem(CFG.K.USERNAME); R.forum(true); },
+
+    addTopic: async function() {
+        var inp = document.getElementById('input-topic-title');
+        var title = inp ? inp.value.trim() : '';
+        var author = S.user();
+        if (!title) { alert('Введите заголовок'); return; }
+        if (!author) { alert('Сначала установите имя на странице форума'); M.close('topic'); return; }
+        var tid = U.tid('temp_topic');
+        S.forum.topics.push({id: tid, title: title, author: author, date: new Date().toISOString().split('T')[0], messages: []});
+        S.save();
+        M.close('topic');
+        inp.value = '';
+        S.topicId = tid;
+        R.forum(true);
+    },
+
+    addMessage: async function() {
+        if (S.sending) return;
+        var ta = document.getElementById('msg-text');
+        var text = ta ? ta.value.trim() : '';
+        var author = S.user();
+        if (!text) { alert('Введите текст'); return; }
+        if (!author) { alert('Установите имя'); return; }
+        var wait = RL.msgWait();
+        if (wait > 0) { alert('Слишком много сообщений. Подождите ' + Math.ceil(wait / 1000) + ' сек.'); return; }
+        S.sending = true;
+        var topic = S.forum.topics.find(function(t) { return t.id === S.topicId; });
+        if (!topic) { S.sending = false; return; }
+        var date = new Date().toISOString().split('T')[0];
+        if (S.parseOk) {
+            try {
+                var q = new Parse.Query('ForumTopic');
+                var obj = await q.get(S.topicId);
+                var msgs = obj.get('messages') || [];
+                var sm = {id: msgs.length + 1, author: author, text: text, date: date, isAdmin: false};
+                msgs.push(sm);
+                obj.set('messages', msgs);
+                await obj.save();
+                var exists = topic.messages.some(function(m) { return m.id === sm.id; });
+                if (!exists) topic.messages.push(sm);
+                RL.logMsg(); S.save();
+                if (ta) ta.value = '';
+                R.forum(true);
+            } catch(e) {
+                console.error('save msg error', e);
+                alert('Не удалось отправить. Проверьте соединение.');
+            } finally { S.sending = false; }
+        } else {
+            topic.messages.push({id: U.tid('temp_msg'), author: author, text: text, date: date, isAdmin: false, pending: true});
+            RL.logMsg(); S.save();
+            if (ta) ta.value = '';
+            R.forum(true);
+            S.sending = false;
+        }
+    }
+};
+
+// ==================== GYM MODULE ====================
+var G = {
+    _gymPhoto: null,
+    getDeviceId: function() {
+        var id = localStorage.getItem(CFG.K.GYM_DEVICE_ID);
+        if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)); localStorage.setItem(CFG.K.GYM_DEVICE_ID, id); }
+        return id;
+    },
+    voted: function() {
+        if (localStorage.getItem(CFG.K.GYM_HAS_VOTED) === 'true') return true;
+        if (S.gym.rats.some(function(r) { return r.pendingGymVote; })) return true;
+        if (localStorage.getItem(CFG.K.GYM_VOTE_PENDING)) return true;
+        return false;
+    },
+
+    handleVote: async function(id, event) {
+        if (G.voted()) { U.float('Уже голосовали!', event.clientX || 0, event.clientY || 0, 'var(--danger)'); return; }
+        var rat = S.gym.rats.find(function(r) { return r.id === id; });
+        if (!rat) return;
+        rat.clicks++; rat.pendingGymVote = true; S.save(); R.gym(true);
+        if (S.parseOk) {
+            try {
+                var v = new Parse.Object('GymVote');
+                v.set('ratId', id); v.set('deviceId', G.getDeviceId());
+                await v.save();
+                var q = new Parse.Query('GymRat');
+                var obj = await q.get(id);
+                obj.increment('clicks'); await obj.save();
+                localStorage.setItem(CFG.K.GYM_HAS_VOTED, 'true');
+                rat.pendingGymVote = false; S.save();
+            } catch(e) {
+                rat.clicks--; rat.pendingGymVote = false; S.save(); R.gym(true);
+                console.error('gym vote error', e);
+                alert('Не удалось сохранить голос. Проверьте соединение.');
+                return;
+            }
+        } else {
+            localStorage.setItem(CFG.K.GYM_VOTE_PENDING, JSON.stringify({ratId: id, deviceId: G.getDeviceId()}));
+        }
+        U.confetti(event.clientX || 0, event.clientY || 0, ['#ff9900', '#ff0055', '#00ffff']);
+        U.float('+1', event.clientX || 0, event.clientY || 0, 'var(--gym)');
+        var card = event.target && event.target.closest ? event.target.closest('.gym-card') : null;
+        if (card) { card.classList.add('voted-flash'); setTimeout(function() { card.classList.remove('voted-flash'); }, 2000); }
+    },
+
+    submitRequest: async function() {
+        var nameInp = document.getElementById('input-gym-name');
+        var facInp = document.getElementById('input-gym-faculty');
+        var name = nameInp ? nameInp.value.trim() : '';
+        var fac = facInp ? facInp.value : '';
+        if (!name) { alert('Введите имя'); return; }
+        if (!fac) { alert('Выберите факультет'); return; }
+        if (!G._gymPhoto) { alert('Загрузите фото'); return; }
+        if (!S.gym) S.gym = {rats: [], myRequest: null};
+        var btn = document.getElementById('btn-gym-request');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...'; }
+        try {
+            var deviceId;
+            try { deviceId = G.getDeviceId(); } catch(e) { deviceId = 'fb_' + Date.now(); }
+            if (S.parseOk) {
+                var r = new Parse.Object('GymRequest');
+                r.set('name', name); r.set('group', fac); r.set('photo', G._gymPhoto);
+                r.set('status', 'pending'); r.set('deviceId', deviceId);
+                await r.save();
+                S.gym.myRequest = {id: r.id, status: 'pending'};
+            } else {
+                S.gym.myRequest = {id: U.tid('temp_req'), status: 'pending'};
+            }
+            S.save(); M.close('gym-request');
+            nameInp.value = ''; facInp.value = '';
+            var fi = document.getElementById('input-gym-photo');
+            if (fi) fi.value = '';
+            G._gymPhoto = null;
+            var box = document.getElementById('gym-photo-preview');
+            if (box) { box.innerHTML = '<i class="fas fa-camera" style="color:var(--text-dim)"></i>'; box.classList.remove('has-photo'); }
+            R.gym(true);
+        } catch(e) {
+            alert('Ошибка: ' + (e.message || 'не удалось отправить'));
+            console.error(e);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Отправить'; }
+        }
+    },
+
+    renderAdmin: async function() {
+        var reqList = document.getElementById('admin-gym-requests');
+        if (!reqList) return;
+        if (!S.parseOk) { reqList.innerHTML = '<div class="empty">Offline</div>'; }
+        else {
+            try {
+                var q = new Parse.Query('GymRequest');
+                q.equalTo('status', 'pending');
+                var reqs = await q.find();
+                if (reqs.length === 0) reqList.innerHTML = '<div class="empty">Нет заявок</div>';
+                else reqList.innerHTML = reqs.map(function(r) {
+                    return '<div class="student-row-admin" style="justify-content:space-between;align-items:flex-start"><div class="info" style="flex:1"><div class="name">' + U.esc(r.get('name')) + '</div><div class="meta">' + U.esc(r.get('group')) + '</div></div><div style="display:flex;gap:.5rem"><button class="btn btn-primary btn-sm" onclick="G.approve(&#39;' + r.id + '&#39;)"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" onclick="G.reject(&#39;' + r.id + '&#39;)"><i class="fas fa-times"></i></button></div></div>';
+                }).join('');
+            } catch(e) { console.error(e); reqList.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+        }
+        var ratList = document.getElementById('admin-gym-rats');
+        if (!ratList) return;
+        if (S.gym.rats.length === 0) ratList.innerHTML = '<div class="empty">Нет участников</div>';
+        else ratList.innerHTML = S.gym.rats.map(function(r) {
+            return '<div class="student-row-admin"><img src="' + (r.photo || U.avatar(r)) + '" alt="" style="width:36px;height:36px;object-fit:cover;border:1px solid var(--border)"><div class="info" style="flex:1"><div class="name">' + U.esc(r.name) + '</div><div class="meta">' + U.esc(r.group) + ' &bull; ' + r.clicks + ' голосов</div></div><button class="btn btn-danger btn-sm" onclick="G.delRat(&#39;' + r.id + '&#39;)"><i class="fas fa-trash"></i></button></div>';
+        }).join('');
+    },
+
+    approve: async function(reqId) {
+        if (!S.parseOk) return;
+        try {
+            var q = new Parse.Query('GymRequest');
+            var req = await q.get(reqId);
+            var rat = new Parse.Object('GymRat');
+            rat.set('name', req.get('name')); rat.set('group', req.get('group'));
+            rat.set('photo', req.get('photo')); rat.set('clicks', 0);
+            await rat.save();
+            req.set('status', 'approved'); await req.save();
+            await Sync.loadGym();
+            R.gym(true); G.renderAdmin();
+        } catch(e) { console.error(e); alert('Ошибка подтверждения'); }
+    },
+
+    reject: async function(reqId) {
+        if (!S.parseOk) return;
+        try { var q = new Parse.Query('GymRequest'); var req = await q.get(reqId); req.set('status', 'rejected'); await req.save(); G.renderAdmin(); }
+        catch(e) { console.error(e); }
+    },
+
+    delRat: async function(id) {
+        if (!confirm('Удалить участника из рейтинга качков?')) return;
+        S.gym.rats = S.gym.rats.filter(function(r) { return r.id !== id; });
+        R.gym(true); G.renderAdmin();
+        if (S.parseOk) { try { await Sync.del('GymRat', id); } catch(e) { console.error(e); } }
+    }
+};
+
+// ==================== RATING MODULE ====================
+var Rate = {
+    _adding: false,
+    handleClick: async function(id, event) {
+        var hint = document.getElementById('mobile-hint');
+        if (hint) { hint.style.display = 'none'; localStorage.setItem(CFG.K.HINT_SEEN, 'true'); }
+        var wait = RL.clickWait();
+        if (wait > 0) { U.float('Лимит: подождите ' + Math.ceil(wait / 1000) + 'с', event.clientX, event.clientY, 'var(--danger)'); return; }
+        RL.logClick();
+        var st = S.students.find(function(s) { return s.id === id; });
+        if (!st) return;
+        st.clicks = (st.clicks || 0) + 1;
+        st.pendingClicks = (st.pendingClicks || 0) + 1;
+        st.lastLocalUpdate = Date.now();
+        S.save();
+        R.rating(true);
+        U.float('+1', event.clientX, event.clientY);
+        if ([10, 25, 50, 100, 200, 500].indexOf(st.clicks) !== -1) U.confetti(event.clientX, event.clientY);
+        var card = event.target && event.target.closest ? event.target.closest('.student-card') : null;
+        if (card) { card.classList.add('voted-flash'); setTimeout(function() { card.classList.remove('voted-flash'); }, 2000); }
+    },
+
+    addStudent: async function() {
+        if (Rate._adding) return;
+        if (S.added()) { alert('Вы уже добавили себя в этой сессии. Обновите страницу, чтобы добавить ещё одного студента.'); return; }
+        var btn = document.getElementById('btn-add-student');
+        var nameInp = document.getElementById('input-name');
+        var facInp = document.getElementById('input-faculty');
+        var name = nameInp ? nameInp.value.trim() : '';
+        var fac = facInp ? facInp.value : '';
+        if (!name) { alert('Введите имя'); return; }
+        if (!fac) { alert('Выберите факультет'); return; }
+        Rate._adding = true;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Добавление...'; }
+        var photo = S.photoCache['pendingPhoto'] || null;
+        S.students.push({id: U.tid('temp'), name: name, group: fac, clicks: 0, photo: photo, pendingClicks: 0});
+        S.save(); S.markAdded();
+        nameInp.value = ''; facInp.value = '';
+        var fi = document.getElementById('input-photo');
+        if (fi) fi.value = '';
+        delete S.photoCache['pendingPhoto'];
+        var box = document.getElementById('photo-preview');
+        if (box) { box.innerHTML = '<i class="fas fa-camera" style="color:var(--text-dim)"></i>'; box.classList.remove('has-photo'); }
+        M.close('add');
+        R.rating(true);
+        Rate._adding = false;
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Добавиться'; }
+    }
+};
+
+// ==================== ADMIN MODULE ====================
+var A = {
+    isAdmin: function() { var u = Parse.User.current(); return u !== null && u.authenticated(); },
+    checkView: function() {
+        var loginView = document.getElementById('admin-login-view');
+        var panelView = document.getElementById('admin-panel-view');
+        if (!loginView || !panelView) return;
+        if (A.isAdmin()) { loginView.style.display = 'none'; panelView.style.display = 'block'; R.admin(true); }
+        else { loginView.style.display = 'block'; panelView.style.display = 'none'; }
+    },
+    login: async function() {
+        var uInp = document.getElementById('admin-username');
+        var pInp = document.getElementById('admin-password');
+        var err = document.getElementById('login-error');
+        var username = uInp ? uInp.value.trim() : '';
+        var password = pInp ? pInp.value : '';
+        if (!username || !password) { if (err) { err.textContent = 'Введите логин и пароль'; err.style.display = 'block'; } return; }
+        try { await Parse.User.logIn(username, password); if (err) err.style.display = 'none'; A.checkView(); }
+        catch(e) { if (err) { err.textContent = 'Неверный логин или пароль'; err.style.display = 'block'; } console.error('login error', e); }
+    },
+    logout: async function() { await Parse.User.logOut(); A.checkView(); },
+    delStudent: async function(id) {
+        if (!confirm('Удалить этого студента из рейтинга?')) return;
+        S.students = S.students.filter(function(s) { return s.id !== id; });
+        S.save(); R.admin(true);
+        if (S.parseOk) { try { await Sync.del('Student', id); } catch(e) { alert(e.message); } }
+    },
+    delTopic: async function(id) {
+        if (!confirm('Удалить тему и все сообщения в ней?')) return;
+        S.forum.topics = S.forum.topics.filter(function(t) { return t.id !== id; });
+        if (S.topicId === id) S.topicId = null;
+        S.save(); R.admin(true);
+        if (S.parseOk) { try { await Sync.del('ForumTopic', id); } catch(e) { alert(e.message); } }
+    },
+    delMessage: async function(topicId, idx) {
+        if (!confirm('Удалить это сообщение?')) return;
+        var topic = S.forum.topics.find(function(t) { return t.id === topicId; });
+        if (!topic || !topic.messages[idx]) return;
+        topic.messages.splice(idx, 1);
+        S.save(); R.admin(true);
+        if (S.parseOk) {
+            try { var obj = await new Parse.Query('ForumTopic').get(topicId); var msgs = obj.get('messages') || []; msgs.splice(idx, 1); obj.set('messages', msgs); await obj.save(); }
+            catch(e) { alert('Ошибка: ' + e.message); }
+        }
+    },
+    reset: async function() {
+        if (!confirm('ВНИМАНИЕ: Все данные будут сброшены до пустого состояния. Продолжить?')) return;
+        S.defaults();
+        localStorage.removeItem(CFG.K.GYM_HAS_VOTED);
+        localStorage.removeItem(CFG.K.GYM_VOTE_PENDING);
+        localStorage.removeItem(CFG.K.GYM_DEVICE_ID);
+        R.admin(true);
+        if (S.parseOk) {
+            try {
+                var classes = ['Student', 'ForumTopic', 'GymRat', 'GymRequest', 'GymVote'];
+                for (var i = 0; i < classes.length; i++) {
+                    var q = new Parse.Query(classes[i]);
+                    var res = await q.find();
+                    await Parse.Object.destroyAll(res).catch(function(){});
+                }
+            } catch(e) { if (e.code === 119) alert('Нет прав на массовое удаление.'); }
+        }
+    },
+    exportData: function() {
+        var blob = new Blob([JSON.stringify({students: S.students, forum: S.forum, gym: S.gym}, null, 2)], {type: 'application/json'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'vmk_mgu_backup_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+};
+
+// ==================== MODAL MANAGER ====================
+var M = {
+    open: function(id) {
+        if (id === 'add' && S.added()) { alert('Вы уже добавили себя в этой сессии.'); return; }
+        var el = document.getElementById('modal-' + id);
+        if (el) el.classList.add('active');
+        var fm = {add: 'input-name', topic: 'input-topic-title', 'gym-request': 'input-gym-name'};
+        var fid = fm[id];
+        if (fid) setTimeout(function() { var inp = document.getElementById(fid); if (inp) inp.focus(); }, 50);
+    },
+    close: function(id) { var el = document.getElementById('modal-' + id); if (el) el.classList.remove('active'); },
+    openGymRequest: function() { document.getElementById('modal-gym-request').classList.add('active'); setTimeout(function() { var inp = document.getElementById('input-gym-name'); if (inp) inp.focus(); }, 50); },
+    previewPhoto: async function(input, previewId, cacheKey) {
+        var file = input.files[0];
+        if (!file) return;
+        var box = document.getElementById(previewId);
+        try {
+            var compressed = await Photo.compress(file);
+            S.photoCache[cacheKey] = compressed;
+            if (box) { box.innerHTML = '<img src="' + compressed + '" style="width:100%;height:100%;object-fit:cover">'; box.classList.add('has-photo'); }
+        } catch(e) { alert(e.message || 'Ошибка обработки фото'); input.value = ''; }
+    }
+};
+
+// ==================== APP CONTROLLER ====================
+// This MUST be a plain object, NOT an IIFE, so window.App is set immediately
+var App = {
+    switchTab: function(tab) {
+        console.log('switchTab:', tab);
+        // Close mobile menu
+        var menu = document.getElementById('mobile-menu');
+        if (menu) { menu.classList.remove('active'); document.body.style.overflow = ''; }
+        // Update state
+        S.tab = tab;
+        // Hide all tabs
+        var tabs = document.querySelectorAll('.tab-content');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        // Show target tab
+        var target = document.getElementById('tab-' + tab);
+        if (target) target.classList.add('active');
+        // Update nav active states
+        var navs = document.querySelectorAll('.nav-item');
+        for (var i = 0; i < navs.length; i++) navs[i].classList.remove('active');
+        var nav = document.getElementById('nav-' + tab);
+        var mnav = document.getElementById('mnav-' + tab);
+        if (nav) nav.classList.add('active');
+        if (mnav) mnav.classList.add('active');
+        // Scroll to top
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        // Admin check
+        if (tab === 'admin') A.checkView();
+        // Render ONLY the active tab
+        this._renderTab(tab, true);
+    },
+
+    toggleMobileMenu: function() {
+        var menu = document.getElementById('mobile-menu');
+        if (menu) { menu.classList.toggle('active'); document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : ''; }
+    },
+
+    closeMobileMenu: function() {
+        var menu = document.getElementById('mobile-menu');
+        if (menu) { menu.classList.remove('active'); document.body.style.overflow = ''; }
+    },
+
+    onData: function() {
+        // Server data changed — re-render only active tab
+        this._renderTab(S.tab, false);
+    },
+
+    _renderTab: function(tab, animate) {
+        console.log('renderTab:', tab, 'animate:', animate);
+        try {
+            switch (tab) {
+                case 'rating': R.rating(animate); break;
+                case 'forum': R.forum(animate); break;
+                case 'gym': R.gym(animate); break;
+                case 'admin': R.admin(animate); break;
+            }
+        } catch(e) { console.error('render error for tab ' + tab + ':', e); }
+    },
+
+    init: async function() {
+        console.log('App.init started');
+        // Load cached data
+        S.load();
+        // Init Parse connection
+        await Sync.init();
+        // If no data at all, load defaults
+        if (!S.parseOk && S.students.length === 0) S.defaults();
+        // Setup data change callback
+        Sync.onData = function() { App.onData(); };
+        // Show mobile hint
+        if (window.innerWidth < 768 && !localStorage.getItem(CFG.K.HINT_SEEN)) {
+            var hint = document.getElementById('mobile-hint');
+            if (hint) hint.style.display = 'flex';
+        }
+        // Initial render
+        this._renderTab(S.tab, true);
+        console.log('App.init complete, active tab:', S.tab);
+    }
+};
+
+// Expose App globally BEFORE init so onclick handlers work even if init fails
+window.App = App;
+window.G = G;
+window.F = F;
+window.Rate = Rate;
+window.A = A;
+window.M = M;
+
+// Boot
+console.log('Booting...');
+App.init();
+
+</script>
+</body>
+</html>
